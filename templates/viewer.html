@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Webreturn · {{.Host}}:{{.Port}}</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#c9d1d9}
+  header{
+    padding:14px 20px;border-bottom:1px solid #21262d;display:flex;
+    align-items:center;gap:12px;flex-wrap:wrap;background:#0d1117;
+    position:sticky;top:0;z-index:10;
+  }
+  .title{font-size:13px;color:#8b949e}
+  .url{
+    font-family:ui-monospace,Consolas,monospace;background:#161b22;border:1px solid #30363d;
+    padding:7px 12px;border-radius:6px;font-size:14px;user-select:all;color:#79c0ff;
+  }
+  .btn{
+    background:#21262d;color:#c9d1d9;border:1px solid #30363d;text-decoration:none;
+    padding:6px 12px;border-radius:6px;cursor:pointer;font:13px inherit;display:inline-block;
+  }
+  .btn:hover{background:#30363d}
+  .btn.danger{color:#ff7b72}
+  .meta{margin-left:auto;font-size:13px;color:#8b949e;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .status{display:inline-flex;align-items:center;gap:6px}
+  .status .dot{width:8px;height:8px;border-radius:50%;background:#f85149}
+  .status.live .dot{background:#3fb950;box-shadow:0 0 8px #3fb950}
+  .status.expired .dot{background:#d29922}
+  main{padding:18px 20px;max-width:1200px;margin:0 auto}
+  .empty{text-align:center;padding:80px 20px;color:#6e7681}
+  .empty p{margin:6px 0}
+  .req{background:#161b22;border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+  .req-head{
+    padding:10px 14px;display:flex;align-items:center;gap:12px;
+    cursor:pointer;user-select:none;flex-wrap:wrap;
+  }
+  .req-head:hover{background:#1c2128}
+  .method{
+    font:600 12px ui-monospace,Consolas,monospace;padding:3px 8px;
+    border-radius:4px;min-width:60px;text-align:center;
+  }
+  .method.GET{background:#1f6feb33;color:#58a6ff}
+  .method.POST{background:#2ea04340;color:#3fb950}
+  .method.PUT{background:#a37acc40;color:#d2a8ff}
+  .method.DELETE{background:#f8514940;color:#ff7b72}
+  .method.PATCH{background:#db6d2840;color:#ffa657}
+  .method.HEAD,.method.OPTIONS{background:#6e768140;color:#8b949e}
+  .path{font-family:ui-monospace,Consolas,monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .from{color:#8b949e;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+  .ts{color:#6e7681;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+  .body-section{display:none;padding:14px;border-top:1px solid #21262d}
+  .req.open .body-section{display:block}
+  .section-title{
+    font:600 11px inherit;text-transform:uppercase;color:#8b949e;
+    letter-spacing:0.5px;margin:14px 0 6px;
+  }
+  .section-title:first-child{margin-top:0}
+  pre{
+    background:#0d1117;border:1px solid #21262d;padding:10px 12px;border-radius:6px;
+    margin:0;font:12px ui-monospace,Consolas,monospace;overflow-x:auto;
+    white-space:pre-wrap;word-break:break-all;
+  }
+  table{width:100%;border-collapse:collapse;font:12px ui-monospace,Consolas,monospace;background:#0d1117;border:1px solid #21262d;border-radius:6px;overflow:hidden}
+  td{padding:5px 10px;border-bottom:1px solid #21262d;vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td:first-child{color:#8b949e;width:30%;word-break:break-all}
+  td:last-child{word-break:break-all;color:#c9d1d9}
+  .warn{color:#d29922;font-size:12px;margin:8px 0 0}
+  .req.new{animation:flash .8s ease-out}
+  @keyframes flash{0%{background:#1f6feb33}100%{background:#161b22}}
+  .clear{font-size:12px;color:#8b949e;cursor:pointer;background:transparent;border:0;padding:4px 8px}
+  .clear:hover{color:#c9d1d9}
+  .copied{color:#3fb950 !important}
+</style>
+</head>
+<body>
+<header>
+  <span class="title">回调地址</span>
+  <span class="url" id="url">{{.URL}}</span>
+  <button class="btn" id="copyBtn" type="button">复制</button>
+  <a class="btn" href="/">新建</a>
+  <div class="meta">
+    <span class="status" id="status"><span class="dot"></span><span id="statusText">连接中...</span></span>
+    <span id="ttl">剩余: --</span>
+    <button class="clear" id="clearBtn" type="button">清空显示</button>
+  </div>
+</header>
+<main>
+  <div id="empty" class="empty">
+    <p style="font-size:16px">等待请求中...</p>
+    <p style="font-size:13px">向上面的地址发送任意 HTTP 请求,内容会实时显示在这里。</p>
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+  const TOKEN = {{.Token}};
+  const EXPIRES_MS = {{.ExpiresMs}};
+  const URL_STR = {{.URL}};
+
+  const $list = document.getElementById('list');
+  const $empty = document.getElementById('empty');
+  const $status = document.getElementById('status');
+  const $statusText = document.getElementById('statusText');
+  const $ttl = document.getElementById('ttl');
+  const $copyBtn = document.getElementById('copyBtn');
+  const $clearBtn = document.getElementById('clearBtn');
+  const seen = new Set();
+
+  $copyBtn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(URL_STR); } catch {}
+    $copyBtn.textContent = '已复制';
+    $copyBtn.classList.add('copied');
+    setTimeout(() => { $copyBtn.textContent = '复制'; $copyBtn.classList.remove('copied'); }, 1200);
+  });
+
+  $clearBtn.addEventListener('click', () => {
+    $list.innerHTML = '';
+    $empty.style.display = '';
+    seen.clear();
+  });
+
+  function fmtTime(iso){
+    const d = new Date(iso);
+    const pad = (n,l=2) => String(n).padStart(l,'0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`;
+  }
+  function esc(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function kvTable(obj){
+    if(!obj || Object.keys(obj).length === 0) return '<pre>(空)</pre>';
+    let html = '<table>';
+    const keys = Object.keys(obj).sort();
+    for(const k of keys){
+      const vs = obj[k];
+      const vals = Array.isArray(vs) ? vs : [vs];
+      html += `<tr><td>${esc(k)}</td><td>${vals.map(esc).join('<br>')}</td></tr>`;
+    }
+    return html + '</table>';
+  }
+  function tryPretty(s){
+    if(!s) return s;
+    const trim = s.trim();
+    if((trim.startsWith('{') && trim.endsWith('}')) || (trim.startsWith('[') && trim.endsWith(']'))){
+      try { return JSON.stringify(JSON.parse(trim), null, 2); } catch {}
+    }
+    return s;
+  }
+  function renderRequest(req, animate){
+    if(seen.has(req.id)) return;
+    seen.add(req.id);
+    $empty.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.className = 'req' + (animate ? ' new' : '');
+
+    let bodyHTML = '<pre>(空)</pre>';
+    if(req.body && req.body.length){
+      bodyHTML = `<pre>${esc(tryPretty(req.body))}</pre>`;
+      if(req.truncated) bodyHTML += `<p class="warn">⚠ body 已截断(超出最大记录尺寸)</p>`;
+    }
+
+    const fullPath = esc(req.path) + (req.raw_query ? '?' + esc(req.raw_query) : '');
+    const requestLine = `${esc(req.method)} ${esc(req.url)} ${esc(req.proto)}\nHost: ${esc(req.host)}`;
+
+    div.innerHTML = `
+      <div class="req-head">
+        <span class="method ${esc(req.method)}">${esc(req.method)}</span>
+        <span class="path">${fullPath}</span>
+        <span class="from">${esc(req.remote_addr)}</span>
+        <span class="ts">${fmtTime(req.timestamp)}</span>
+      </div>
+      <div class="body-section">
+        <div class="section-title">请求行</div>
+        <pre>${requestLine}</pre>
+        <div class="section-title">Query 参数</div>
+        ${kvTable(req.query)}
+        <div class="section-title">Headers</div>
+        ${kvTable(req.headers)}
+        <div class="section-title">Body (${req.body_size} 字节)</div>
+        ${bodyHTML}
+      </div>
+    `;
+    div.querySelector('.req-head').addEventListener('click', () => div.classList.toggle('open'));
+    $list.insertBefore(div, $list.firstChild);
+  }
+
+  function setStatus(state, text){
+    $status.classList.remove('live','expired');
+    if(state) $status.classList.add(state);
+    $statusText.textContent = text;
+  }
+
+  function tickTTL(){
+    const ms = EXPIRES_MS - Date.now();
+    if(ms <= 0){ $ttl.textContent = '已过期'; return; }
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    let txt = '剩余: ';
+    if(h) txt += h + '时';
+    if(h || m) txt += m + '分';
+    txt += sec + '秒';
+    $ttl.textContent = txt;
+  }
+  setInterval(tickTTL, 1000);
+  tickTTL();
+
+  let retryDelay = 1000;
+  function connect(){
+    setStatus('', '连接中...');
+    const es = new EventSource(`/api/sessions/${TOKEN}/events`);
+    es.addEventListener('open', () => { setStatus('live', '已连接'); retryDelay = 1000; });
+    es.addEventListener('request', e => {
+      const req = JSON.parse(e.data);
+      const isLive = $status.classList.contains('live');
+      renderRequest(req, isLive);
+    });
+    es.addEventListener('expired', () => {
+      setStatus('expired', '会话已过期');
+      es.close();
+    });
+    es.addEventListener('error', () => {
+      setStatus('', `断线重连 (${retryDelay/1000}s)`);
+      es.close();
+      setTimeout(connect, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 15000);
+    });
+  }
+  connect();
+</script>
+</body>
+</html>

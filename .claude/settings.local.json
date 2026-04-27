@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go version *)",
+      "Bash(/e/io/webreturn/webreturn.exe -listen :18080 -ttl 5m)",
+      "Bash(curl -s --max-time 3 http://127.0.0.1:18080/api/sessions/68c9a05b57afe0c021b641fac7874bd9/events)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://127.0.0.1:18080/v/nope\")",
+      "Bash(wait)",
+      "Bash(/usr/bin/taskkill //F //IM webreturn.exe)",
+      "Bash(taskkill //F //IM webreturn.exe)",
+      "Bash(npx wrangler *)",
+      "Bash(/e/io/webreturn/webreturn.exe -listen :18081 -ttl 2m)"
+    ]
+  }
+}

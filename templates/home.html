@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Webreturn · 开发回调捕获</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#0d1117;color:#c9d1d9;min-height:100vh;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .card{
+    max-width:520px;width:100%;background:#161b22;
+    border:1px solid #30363d;border-radius:10px;padding:36px;text-align:center;
+  }
+  h1{margin:0 0 8px;font-size:22px;font-weight:600}
+  .desc{color:#8b949e;margin:8px 0 28px;line-height:1.6}
+  form{display:flex;flex-direction:column;gap:18px;align-items:center}
+  .ttl{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:#8b949e}
+  input[type=text]{
+    background:#0d1117;color:#c9d1d9;border:1px solid #30363d;
+    padding:7px 10px;border-radius:6px;width:120px;font:inherit;
+  }
+  input[type=text]:focus{outline:none;border-color:#58a6ff}
+  button{
+    background:#238636;color:white;border:0;padding:11px 32px;
+    font:600 15px inherit;border-radius:6px;cursor:pointer;
+  }
+  button:hover{background:#2ea043}
+  .hint{margin-top:20px;font-size:12px;color:#6e7681;line-height:1.6}
+  code{background:#0d1117;padding:1px 6px;border-radius:3px;border:1px solid #21262d}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>开发回调捕获</h1>
+  <p class="desc">点击下方按钮,服务端会随机选一个空闲端口,启动专属监听器,并跳转到查看页。<br>所有打到该端口的 HTTP 请求(任意路径、任意方法)都会被实时记录。</p>
+  <form method="post" action="/api/sessions">
+    <label class="ttl">有效期 <input type="text" name="ttl" value="{{.DefaultTTL}}" placeholder="如 1h, 30m, 2h"></label>
+    <button type="submit">生成回调地址</button>
+  </form>
+  <div class="hint">
+    支持的 TTL 格式: <code>30s</code> · <code>10m</code> · <code>1h</code> · <code>24h</code>
+  </div>
+</div>
+</body>
+</html>

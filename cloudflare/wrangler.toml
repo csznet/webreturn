@@ -1,0 +1,22 @@
+name = "webreturn"
+main = "src/worker.ts"
+compatibility_date = "2025-01-15"
+
+# 默认会话有效期(支持 30s / 10m / 1h / 24h 等)
+[vars]
+DEFAULT_TTL = "1h"
+
+# Durable Object 绑定 — 每个 token 一个独立实例
+[[durable_objects.bindings]]
+name = "SESSION"
+class_name = "CallbackSession"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CallbackSession"]
+
+# 把 .html 当作字符串导入
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true

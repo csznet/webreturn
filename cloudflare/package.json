@@ -1,0 +1,16 @@
+{
+  "name": "webreturn-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webreturn — Cloudflare Workers + Durable Objects edition",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^4.0.0"
+  }
+}

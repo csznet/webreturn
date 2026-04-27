@@ -1,0 +1,21 @@
+# Go build output
+webreturn
+webreturn.exe
+*.test
+*.out
+
+# Cloudflare Worker
+cloudflare/node_modules/
+cloudflare/.wrangler/
+cloudflare/dist/
+cloudflare/.dev.vars
+cloudflare/package-lock.json
+cloudflare/yarn.lock
+cloudflare/pnpm-lock.yaml
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
