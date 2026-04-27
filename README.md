@@ -1,5 +1,7 @@
 # webreturn
 
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/csznet/webreturn/tree/main/cloudflare)
+
 开发用的 HTTP 回调捕获工具。点一下按钮拿到一个临时 URL,所有打到这个地址的请求都会实时滚动展示出来 — Method、URL、Query、Header、Body 一应俱全。适合调试 webhook、OAuth 回调、第三方推送、IoT 上报等需要"看一眼对方到底发了啥"的场景。
 
 支持两种部署方式,选一种即可:
