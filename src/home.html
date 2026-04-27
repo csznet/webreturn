@@ -2,106 +2,225 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Webreturn · 开发回调与请求工具</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Webreturn · HTTP 接收与发送</title>
 <style>
-  *{box-sizing:border-box}
-  body{
-    margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;
-    background:#0d1117;color:#c9d1d9;min-height:100vh;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;gap:28px;
+  :root{
+    --bg:#0d1117;
+    --surface:#161b22;
+    --surface-2:#1c2128;
+    --border:#30363d;
+    --border-strong:#444c56;
+    --accent:#58a6ff;
+    --accent-bg:rgba(31,111,235,.18);
+    --success:#3fb950;
+    --success-bg:rgba(46,160,67,.18);
+    --warn:#d29922;
+    --danger:#ff7b72;
+    --text:#e6edf3;
+    --text-muted:#8b949e;
+    --text-faint:#6e7681;
+    --radius:12px;
+    --radius-sm:6px;
+    --shadow-1:0 1px 0 rgba(255,255,255,.03), 0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 1px 0 rgba(255,255,255,.04), 0 14px 36px rgba(0,0,0,.4);
+    --shadow-accent:0 12px 32px rgba(31,111,235,.18);
   }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    font:14.5px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","SF Pro Text",Roboto,"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(ellipse 900px 700px at top center, rgba(88,166,255,.06), transparent 55%),
+      radial-gradient(ellipse 700px 500px at bottom right, rgba(63,185,80,.04), transparent 60%),
+      var(--bg);
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px 24px;gap:32px;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    animation:fadein .4s ease-out both;
+  }
+  @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
   .hero{text-align:center;max-width:880px;width:100%}
-  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;background:#1f6feb33;color:#58a6ff;margin-bottom:12px;letter-spacing:.3px}
-  h1{margin:0 0 6px;font-size:24px;font-weight:600}
-  .tagline{color:#8b949e;margin:0;font-size:14px}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font:500 11px/1 inherit;letter-spacing:.4px;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px;
+    background:var(--accent-bg);color:var(--accent);
+    border:1px solid rgba(88,166,255,.25);
+    margin-bottom:16px;
+  }
+  .badge.green{background:var(--success-bg);color:var(--success);border-color:rgba(63,185,80,.25)}
+  h1{
+    margin:0 0 8px;font-size:32px;font-weight:700;letter-spacing:-.5px;
+    background:linear-gradient(180deg,#fff 0%,#a8b3cf 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tagline{color:var(--text-muted);margin:0;font-size:15px}
 
   .cards{
-    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+    display:grid;grid-template-columns:repeat(2,1fr);gap:18px;
     max-width:880px;width:100%;
   }
   .card{
-    background:#161b22;border:1px solid #30363d;border-radius:10px;padding:28px;
-    display:flex;flex-direction:column;gap:14px;text-decoration:none;color:inherit;
-    transition:border-color .15s ease,transform .15s ease;
+    background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:28px;display:flex;flex-direction:column;gap:14px;
+    text-decoration:none;color:inherit;
+    box-shadow:var(--shadow-1);
+    transition:border-color .2s ease,transform .2s ease,box-shadow .2s ease,background .2s ease;
   }
-  .link-card:hover{border-color:#58a6ff;transform:translateY(-2px)}
-  .card h2{margin:0;font-size:17px;font-weight:600}
-  .card .desc{margin:0;color:#8b949e;font-size:13px;line-height:1.6;flex:1}
+  .link-card:hover{
+    border-color:rgba(88,166,255,.5);
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-accent),var(--shadow-1);
+    background:linear-gradient(180deg,var(--surface) 0%,var(--surface-2) 100%);
+  }
+  .link-card:active{transform:translateY(-1px)}
   .icon{
-    width:42px;height:42px;border-radius:10px;background:#0d1117;border:1px solid #30363d;
-    display:flex;align-items:center;justify-content:center;color:#58a6ff;
+    width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(88,166,255,.18),rgba(88,166,255,.04));
+    border:1px solid rgba(88,166,255,.25);
+    color:var(--accent);
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset;
   }
-  .icon.green{color:#3fb950}
-  form{display:flex;flex-direction:column;gap:12px}
-  .ttl{display:inline-flex;align-items:center;gap:10px;font-size:12px;color:#8b949e}
+  .icon.green{
+    background:linear-gradient(135deg,rgba(63,185,80,.18),rgba(63,185,80,.04));
+    border-color:rgba(63,185,80,.25);
+    color:var(--success);
+  }
+  .card h2{margin:0;font-size:18px;font-weight:600;letter-spacing:-.2px}
+  .card .desc{margin:0;color:var(--text-muted);font-size:13.5px;line-height:1.65;flex:1}
+
+  form{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+  .ttl{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:12.5px;color:var(--text-muted);
+  }
   input[type=text]{
-    background:#0d1117;color:#c9d1d9;border:1px solid #30363d;
-    padding:7px 10px;border-radius:6px;width:100%;font:inherit;
+    background:var(--bg);color:var(--text);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px 11px;font:inherit;
+    transition:border-color .15s ease,box-shadow .15s ease;
   }
-  input[type=text]:focus{outline:none;border-color:#58a6ff}
+  input[type=text]:hover{border-color:var(--border-strong)}
+  input[type=text]:focus{
+    outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(88,166,255,.18);
+  }
   .ttl input{width:120px;flex:0 0 auto}
   button[type=submit]{
-    background:#238636;color:white;border:0;padding:10px 22px;
-    font:600 14px inherit;border-radius:6px;cursor:pointer;
+    background:linear-gradient(180deg,#2ea043,#238636);
+    color:white;border:0;padding:11px 22px;
+    font:600 14px inherit;border-radius:var(--radius-sm);cursor:pointer;
+    box-shadow:0 1px 0 rgba(255,255,255,.1) inset, 0 1px 2px rgba(0,0,0,.4);
+    transition:filter .12s ease,transform .08s ease;
   }
-  button[type=submit]:hover{background:#2ea043}
+  button[type=submit]:hover{filter:brightness(1.08)}
+  button[type=submit]:active{transform:scale(.98)}
+
   .cta{
-    display:inline-flex;align-items:center;gap:6px;color:#58a6ff;font-weight:500;font-size:14px;
+    display:inline-flex;align-items:center;gap:6px;
+    color:var(--accent);font-weight:500;font-size:14px;
     margin-top:auto;
+    transition:gap .18s ease;
   }
-  .hint{font-size:11px;color:#6e7681}
-  code{background:#0d1117;padding:1px 6px;border-radius:3px;border:1px solid #21262d;font-size:12px}
+  .link-card:hover .cta{gap:10px}
+
+  .hint{font-size:11.5px;color:var(--text-faint)}
+  code{
+    background:var(--bg);padding:1px 6px;border-radius:4px;
+    border:1px solid var(--border);font-size:12px;
+    font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    color:var(--text-muted);
+  }
 
   footer{
     display:flex;flex-direction:column;align-items:center;gap:10px;
-    color:#6e7681;font-size:12px;
+    color:var(--text-faint);font-size:12px;
   }
   .ghlink{
-    display:inline-flex;align-items:center;gap:8px;color:#c9d1d9;text-decoration:none;
-    background:#161b22;border:1px solid #30363d;padding:8px 16px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:8px;
+    color:var(--text);text-decoration:none;
+    background:var(--surface);border:1px solid var(--border);
+    padding:9px 16px;border-radius:999px;
     font-size:13px;font-weight:500;
-    transition:border-color .15s ease,color .15s ease,transform .15s ease;
+    box-shadow:var(--shadow-1);
+    transition:all .15s ease;
   }
-  .ghlink:hover{border-color:#58a6ff;color:#58a6ff;transform:translateY(-1px)}
-  .ghhint a{color:#8b949e;text-decoration:none}
-  .ghhint a:hover{color:#58a6ff}
+  .ghlink:hover{
+    border-color:var(--accent);color:var(--accent);
+    transform:translateY(-1px);
+    box-shadow:var(--shadow-accent),var(--shadow-1);
+  }
+  .ghhint a{color:var(--text-muted);text-decoration:none;transition:color .15s}
+  .ghhint a:hover{color:var(--accent)}
 
-  @media (max-width:700px){
-    .cards{grid-template-columns:1fr;gap:12px}
-    body{gap:22px}
+  /* iPad / 折叠屏(竖向) — 仍然双栏 */
+  @media (max-width:900px){
+    body{padding:28px 20px;gap:28px}
+    h1{font-size:28px}
+    .card{padding:24px}
   }
+  /* 大手机 / 平板竖向偏窄 — 收紧间距 */
+  @media (max-width:768px){
+    .cards{gap:14px}
+    .card{padding:22px;gap:12px}
+  }
+  /* 折成单列 — 大手机及以下 */
+  @media (max-width:600px){
+    body{padding:22px 16px;gap:22px}
+    .cards{grid-template-columns:1fr;gap:14px}
+    h1{font-size:26px}
+    .tagline{font-size:14px}
+  }
+  /* 中型手机 */
   @media (max-width:480px){
-    body{padding:16px;gap:18px}
-    .badge{font-size:10px}
-    h1{font-size:20px}
+    body{padding:18px 14px;gap:18px}
+    .badge{font-size:10px;margin-bottom:14px}
+    h1{font-size:23px}
     .tagline{font-size:13px}
-    .card{padding:22px 18px;gap:12px}
-    .icon{width:38px;height:38px}
+    .card{padding:20px 18px;gap:12px}
+    .icon{width:40px;height:40px}
     .icon svg{width:20px;height:20px}
-    .card h2{font-size:16px}
-    .card .desc{font-size:12.5px}
+    .card h2{font-size:16.5px}
+    .card .desc{font-size:13px}
     .ttl{width:100%;justify-content:space-between}
     .ttl input{width:140px;flex:0 0 140px}
-    button[type=submit]{width:100%;padding:11px}
-    .ghlink{padding:7px 14px;font-size:12px}
-    .ghhint{font-size:11px}
+    button[type=submit]{width:100%;padding:11px 16px;min-height:42px}
+    .ghlink{padding:8px 14px;font-size:12px}
   }
+  /* 窄手机 */
   @media (max-width:360px){
-    body{padding:14px}
-    .card{padding:18px 14px}
-    h1{font-size:18px}
+    body{padding:14px 12px}
+    .card{padding:16px 14px}
+    h1{font-size:21px}
     .ttl{flex-wrap:wrap;gap:6px}
     .ttl input{flex:1 1 100%;width:100%}
+  }
+  /* 大屏 — 字号微放大 */
+  @media (min-width:1200px){
+    h1{font-size:36px}
+    .card{padding:32px}
+    .card h2{font-size:19px}
+  }
+  /* 减少动效偏好 */
+  @media (prefers-reduced-motion:reduce){
+    body{animation:none}
+    *{transition:none !important}
   }
 </style>
 </head>
 <body>
 <div class="hero">
-  <span class="badge">Cloudflare Workers</span>
+  <span class="badge">⚡ Cloudflare Workers</span>
   <h1>Webreturn</h1>
-  <p class="tagline">开发回调捕获 + 在线请求测试</p>
+  <p class="tagline">为开发者打造的 HTTP 接收 / 发送两件套</p>
 </div>
 
 <div class="cards">
@@ -113,7 +232,7 @@
       </svg>
     </div>
     <h2>接收</h2>
-    <p class="desc">分配临时 URL,实时显示所有打过来的请求 — Method、URL、Query、Headers、Body 一览无余。</p>
+    <p class="desc">分配临时 URL,所有打过来的请求都会实时滚动展示 — Method、URL、Query、Headers、Body 一应俱全。</p>
     <form method="post" action="/api/sessions">
       <label class="ttl">有效期 <input type="text" name="ttl" value="1h" placeholder="1h, 30m, 24h"></label>
       <button type="submit">生成回调地址</button>
@@ -129,7 +248,7 @@
       </svg>
     </div>
     <h2>发送</h2>
-    <p class="desc">网页版 Postman:输入 URL、选择 method、调参数与请求头、查看响应,免装客户端。</p>
+    <p class="desc">网页版 Postman:method、URL、参数、请求头、Body 一站式调,响应实时显示。免装客户端,带捕获请求一键重放。</p>
     <span class="cta">打开 →</span>
   </a>
 </div>
