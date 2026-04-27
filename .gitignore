@@ -4,14 +4,11 @@ webreturn.exe
 *.test
 *.out
 
-# Cloudflare Worker
-cloudflare/node_modules/
-cloudflare/.wrangler/
-cloudflare/dist/
-cloudflare/.dev.vars
-cloudflare/package-lock.json
-cloudflare/yarn.lock
-cloudflare/pnpm-lock.yaml
+# Node / Cloudflare Worker
+node_modules/
+.wrangler/
+dist/
+.dev.vars
 
 # Editor / OS
 .vscode/

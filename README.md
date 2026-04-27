@@ -1,6 +1,6 @@
 # webreturn
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/csznet/webreturn/tree/main/cloudflare)
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/csznet/webreturn)
 
 开发用的 HTTP 回调捕获工具。点一下按钮拿到一个临时 URL,所有打到这个地址的请求都会实时滚动展示出来 — Method、URL、Query、Header、Body 一应俱全。适合调试 webhook、OAuth 回调、第三方推送、IoT 上报等需要"看一眼对方到底发了啥"的场景。
 
@@ -62,8 +62,13 @@ go build -o webreturn .
 
 ### 部署
 
+最快 — 直接点最上面的「Deploy to Cloudflare Workers」按钮,跟着引导授权 + Fork 即可。
+
+或者本地命令行:
+
 ```bash
-cd cloudflare
+git clone https://github.com/csznet/webreturn.git
+cd webreturn
 npm install
 npx wrangler login           # 浏览器登录授权
 npx wrangler deploy
@@ -105,7 +110,7 @@ npx wrangler deploy --var DEFAULT_TTL:30m
 
 ### 限制
 
-- 单条 body 超过 1 MiB 会被截断(可在 `cloudflare/src/session.ts` 改 `MAX_BODY`)
+- 单条 body 超过 1 MiB 会被截断(可在 `src/session.ts` 改 `MAX_BODY`)
 - Workers 的请求最多持续 ~15 min,SSE 会定时断开;前端会自动指数退避重连,不影响使用
 - 客户端 IP 用 `CF-Connecting-IP` 头取(Cloudflare 自动注入)
 
@@ -157,18 +162,17 @@ webreturn/
 ├── templates/            # Go 版前端模板(embed 进二进制)
 │   ├── home.html
 │   └── viewer.html
-└── cloudflare/           # Cloudflare Workers 版本
-    ├── wrangler.toml
-    ├── package.json
-    ├── tsconfig.json
-    └── src/
-        ├── worker.ts     # Worker 入口、路由、token 分配
-        ├── session.ts    # CallbackSession Durable Object
-        ├── home.html
-        └── viewer.html
+├── wrangler.toml         # Cloudflare Workers 配置
+├── package.json
+├── tsconfig.json
+└── src/                  # Workers 版源码
+    ├── worker.ts         # Worker 入口、路由、token 分配
+    ├── session.ts        # CallbackSession Durable Object
+    ├── home.html
+    └── viewer.html
 ```
 
-两套实现完全独立,改一边不会影响另一边。
+两套实现完全独立 — Go 端只看 `*.go` + `templates/`,Worker 端只看 `src/` + 三个根配置。两边都放在仓库根方便 Cloudflare deploy 按钮直接识别。
 
 ---
 
