@@ -72,8 +72,8 @@
   @media (max-width:640px){
     header{padding:12px 14px;gap:8px}
     .title{display:none}
-    .url{order:-1;flex:1 1 100%;font-size:12px;padding:7px 10px;text-align:center}
-    .btn{padding:7px 14px;font-size:13px}
+    .url{order:-1;flex:1 1 100%;font-size:12px;padding:8px 10px;text-align:center;word-break:break-all}
+    .btn{padding:8px 14px;font-size:13px;min-height:36px}
     .meta{margin-left:0;width:100%;flex-wrap:wrap;gap:10px;justify-content:space-between;font-size:12px}
     main{padding:14px}
     .req-head{padding:10px 12px;gap:8px;row-gap:6px}
@@ -81,14 +81,25 @@
     .from{font-size:11px}
     .ts{font-size:11px;margin-left:auto}
     .body-section{padding:12px}
-    pre{font-size:11px;padding:8px 10px}
+    pre{font-size:11px;padding:8px 10px;max-height:60vh}
     .section-title{margin-top:14px}
+    .replay-btn{padding:7px 14px;font-size:12px;min-height:34px}
     table{display:block;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:4px 10px}
     tbody{display:block}
     tr{display:block;padding:8px 0;border-bottom:1px solid #21262d}
     tr:last-child{border-bottom:0}
     td{display:block;padding:0;border:0;width:auto}
     td:first-child{font-size:11px;margin-bottom:3px}
+  }
+  @media (max-width:380px){
+    header{padding:10px 12px;gap:6px}
+    main{padding:10px}
+    .url{font-size:11px}
+    .btn{padding:7px 10px}
+    .meta{font-size:11px;gap:8px}
+    .ts{display:none}
+    .body-section{padding:10px}
+    pre{font-size:10.5px;padding:7px 9px}
   }
 </style>
 </head>

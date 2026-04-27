@@ -120,22 +120,63 @@
   @media (max-width:640px){
     header{padding:12px 14px;gap:10px}
     .htitle{font-size:14px}
-    main{padding:14px}
+    main{padding:14px 12px}
+    .card{padding:12px}
+
+    /* 请求栏: method + url 同行,send 独占下一行(更大点击区) */
     .req-bar{gap:6px}
-    #method{width:90px;font-size:13px}
-    #url{flex:1 1 100%;order:1;font-size:12px}
-    #send{flex:1 0 auto;order:2}
-    .tab{padding:8px 12px;font-size:13px}
-    .resp-meta{margin:-14px -14px 12px;padding:10px;gap:10px;font-size:12px}
-    pre{font-size:11px;padding:8px 10px;max-height:380px}
+    #method{flex:0 0 90px;width:90px;font-size:13px}
+    #url{flex:1 1 calc(100% - 96px);min-width:0;font-size:12px}
+    #send{flex:1 1 100%;padding:10px 22px;min-height:40px}
+
+    .tab{padding:9px 12px;font-size:13px}
+    .add-row{padding:8px 12px}
+    .ct-chip{padding:5px 10px;font-size:12px}
+    .kv-row .del{min-height:36px}
+
+    .resp-meta{margin:-12px -12px 12px;padding:10px 12px;gap:12px;font-size:12px;flex-wrap:wrap}
+    pre{font-size:11px;padding:8px 10px;max-height:55vh}
+
+    /* 表格竖排 */
     table.kv{display:block}
     table.kv tbody{display:block}
     table.kv tr{display:block;padding:8px 10px;border-bottom:1px solid #21262d}
     table.kv tr:last-child{border-bottom:0}
     table.kv td{display:block;padding:0;border:0;width:auto}
     table.kv td:first-child{font-size:11px;margin-bottom:3px}
-    .hist-item{flex-wrap:wrap;gap:8px}
-    .hist-url{flex:1 1 100%;order:3}
+
+    .hist-item{flex-wrap:wrap;gap:8px;padding:10px 12px}
+    .hist-url{flex:1 1 100%;order:3;font-size:11px}
+    .hist-time{margin-left:auto}
+  }
+  /* 窄屏手机:KV 行竖排,请求栏更紧凑 */
+  @media (max-width:420px){
+    header{padding:10px 12px;gap:8px}
+    .htitle{font-size:13px}
+    main{padding:10px}
+    .card{padding:10px}
+    .section-title{font-size:12px}
+
+    #method{flex:0 0 80px;width:80px;font-size:12px;padding:7px 8px}
+    #url{flex:1 1 calc(100% - 86px);font-size:12px}
+    #send{padding:10px;font-size:13px}
+
+    /* key/value 各占一行,delete 紧贴 key */
+    .kv-row{flex-wrap:wrap;gap:4px}
+    .kv-row > input:nth-of-type(1){flex:1 1 calc(100% - 36px);font-size:12px;padding:7px 8px}
+    .kv-row > input:nth-of-type(2){flex:1 1 100%;font-size:12px;padding:7px 8px}
+    .kv-row .del{flex:0 0 32px;width:32px;height:32px;min-height:32px;padding:0}
+
+    .ct-chips{gap:4px}
+    .ct-chip{padding:4px 8px;font-size:11px}
+
+    #body{font-size:11px;min-height:130px}
+
+    .resp-meta{padding:10px;gap:10px;font-size:11px}
+    pre{font-size:10.5px;padding:7px 9px;max-height:48vh}
+
+    .status-pill{font-size:11px;padding:3px 8px}
+    .meta-val{font-size:11px}
   }
 </style>
 </head>
