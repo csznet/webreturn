@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Webreturn · 在线请求测试</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
+  header{
+    padding:14px 20px;border-bottom:1px solid #21262d;display:flex;
+    align-items:center;gap:14px;background:#0d1117;position:sticky;top:0;z-index:10;
+  }
+  .back{
+    color:#8b949e;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:4px;
+  }
+  .back:hover{color:#58a6ff}
+  .htitle{font-size:15px;font-weight:600;flex:1}
+  main{padding:18px 20px;max-width:1100px;margin:0 auto}
+
+  .card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:14px}
+
+  .req-bar{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+  select,input[type=text],textarea{
+    background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;
+    padding:8px 10px;font:inherit;
+  }
+  select:focus,input:focus,textarea:focus{outline:none;border-color:#58a6ff}
+  #method{font-weight:600;width:110px;cursor:pointer}
+  #url{flex:1;min-width:200px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+  #send{
+    background:#238636;color:white;border:0;padding:8px 26px;border-radius:6px;
+    font:600 14px inherit;cursor:pointer;
+  }
+  #send:hover{background:#2ea043}
+  #send:disabled{background:#30363d;color:#8b949e;cursor:not-allowed}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid #21262d;margin-bottom:12px;overflow-x:auto}
+  .tab{
+    padding:8px 14px;cursor:pointer;color:#8b949e;border:0;background:transparent;
+    font:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;
+  }
+  .tab:hover{color:#c9d1d9}
+  .tab.active{color:#c9d1d9;border-bottom-color:#58a6ff}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+
+  .kv-row{display:flex;gap:6px;margin-bottom:6px}
+  .kv-row input{flex:1;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+  .kv-row .del{
+    background:transparent;border:1px solid #30363d;color:#8b949e;cursor:pointer;
+    width:34px;border-radius:6px;font:inherit;
+  }
+  .kv-row .del:hover{color:#ff7b72;border-color:#ff7b72}
+  .add-row{
+    background:transparent;border:1px dashed #30363d;color:#8b949e;cursor:pointer;
+    padding:6px 12px;border-radius:6px;font:13px inherit;width:100%;margin-top:4px;
+  }
+  .add-row:hover{color:#58a6ff;border-color:#58a6ff}
+
+  .ct-chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .ct-chip{
+    background:#0d1117;border:1px solid #30363d;color:#c9d1d9;
+    padding:4px 10px;border-radius:999px;font:12px inherit;cursor:pointer;
+  }
+  .ct-chip:hover{border-color:#58a6ff;color:#58a6ff}
+  #body{width:100%;min-height:160px;font-family:ui-monospace,Consolas,monospace;font-size:12px;resize:vertical}
+
+  .resp-meta{
+    display:flex;gap:16px;flex-wrap:wrap;align-items:center;
+    padding:10px 14px;background:#0d1117;border-bottom:1px solid #21262d;
+    margin:-14px -14px 14px;font-size:13px;
+  }
+  .status-pill{padding:3px 10px;border-radius:999px;font-weight:600;font-size:12px;font-family:ui-monospace,Consolas,monospace}
+  .status-2xx{background:#2ea04340;color:#3fb950}
+  .status-3xx{background:#1f6feb33;color:#58a6ff}
+  .status-4xx,.status-5xx,.status-err{background:#f8514940;color:#ff7b72}
+  .meta-label{color:#8b949e}
+  .meta-val{color:#c9d1d9;font-family:ui-monospace,Consolas,monospace}
+
+  pre{
+    background:#0d1117;border:1px solid #21262d;padding:10px 12px;border-radius:6px;
+    margin:0;font:12px ui-monospace,Consolas,monospace;overflow-x:auto;
+    white-space:pre-wrap;word-break:break-all;max-height:500px;overflow-y:auto;
+  }
+  table.kv{width:100%;border-collapse:collapse;font:12px ui-monospace,Consolas,monospace;background:#0d1117;border:1px solid #21262d;border-radius:6px;overflow:hidden}
+  table.kv td{padding:5px 10px;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-all}
+  table.kv tr:last-child td{border-bottom:0}
+  table.kv td:first-child{color:#8b949e;width:30%}
+
+  .empty-resp{padding:40px 20px;text-align:center;color:#6e7681}
+
+  #history{display:none}
+  #history.has-items{display:block}
+  .hist-item{
+    display:flex;align-items:center;gap:10px;padding:8px 12px;
+    border:1px solid #30363d;border-radius:6px;margin-bottom:6px;cursor:pointer;
+    transition:border-color .15s;
+  }
+  .hist-item:hover{border-color:#58a6ff}
+  .hist-method{font:600 11px ui-monospace,Consolas,monospace;padding:2px 7px;border-radius:4px;min-width:54px;text-align:center}
+  .hist-method.GET{background:#1f6feb33;color:#58a6ff}
+  .hist-method.POST{background:#2ea04340;color:#3fb950}
+  .hist-method.PUT{background:#a37acc40;color:#d2a8ff}
+  .hist-method.DELETE{background:#f8514940;color:#ff7b72}
+  .hist-method.PATCH{background:#db6d2840;color:#ffa657}
+  .hist-method.HEAD,.hist-method.OPTIONS{background:#6e768140;color:#8b949e}
+  .hist-status{font:600 11px ui-monospace,Consolas,monospace;padding:2px 7px;border-radius:4px}
+  .hist-url{flex:1;font:12px ui-monospace,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9d1d9}
+  .hist-time{color:#6e7681;font:11px ui-monospace,Consolas,monospace}
+  .hist-clear{
+    background:transparent;border:0;color:#6e7681;cursor:pointer;font:12px inherit;padding:4px 8px;
+  }
+  .hist-clear:hover{color:#ff7b72}
+
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;font:600 13px inherit}
+  .truncate-warn{color:#d29922;font-size:12px;margin-top:8px}
+
+  /* 移动端 */
+  @media (max-width:640px){
+    header{padding:12px 14px;gap:10px}
+    .htitle{font-size:14px}
+    main{padding:14px}
+    .req-bar{gap:6px}
+    #method{width:90px;font-size:13px}
+    #url{flex:1 1 100%;order:1;font-size:12px}
+    #send{flex:1 0 auto;order:2}
+    .tab{padding:8px 12px;font-size:13px}
+    .resp-meta{margin:-14px -14px 12px;padding:10px;gap:10px;font-size:12px}
+    pre{font-size:11px;padding:8px 10px;max-height:380px}
+    table.kv{display:block}
+    table.kv tbody{display:block}
+    table.kv tr{display:block;padding:8px 10px;border-bottom:1px solid #21262d}
+    table.kv tr:last-child{border-bottom:0}
+    table.kv td{display:block;padding:0;border:0;width:auto}
+    table.kv td:first-child{font-size:11px;margin-bottom:3px}
+    .hist-item{flex-wrap:wrap;gap:8px}
+    .hist-url{flex:1 1 100%;order:3}
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="back">← 首页</a>
+  <span class="htitle">在线请求测试</span>
+</header>
+<main>
+  <div class="card">
+    <div class="req-bar">
+      <select id="method">
+        <option>GET</option><option>POST</option><option>PUT</option>
+        <option>DELETE</option><option>PATCH</option><option>HEAD</option><option>OPTIONS</option>
+      </select>
+      <input id="url" type="text" placeholder="https://api.example.com/path" autocomplete="off" spellcheck="false">
+      <button id="send" type="button">发送</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="params" type="button">Params <span class="tab-count" id="cnt-params"></span></button>
+      <button class="tab" data-tab="headers" type="button">Headers <span class="tab-count" id="cnt-headers"></span></button>
+      <button class="tab" data-tab="body" type="button">Body</button>
+    </div>
+    <div class="tab-pane active" id="pane-params">
+      <div id="params-list"></div>
+      <button class="add-row" data-add="params" type="button">+ 添加参数</button>
+    </div>
+    <div class="tab-pane" id="pane-headers">
+      <div id="headers-list"></div>
+      <button class="add-row" data-add="headers" type="button">+ 添加请求头</button>
+    </div>
+    <div class="tab-pane" id="pane-body">
+      <div class="ct-chips">
+        <span style="color:#8b949e;font-size:12px;align-self:center">Content-Type:</span>
+        <button class="ct-chip" data-ct="application/json" type="button">JSON</button>
+        <button class="ct-chip" data-ct="application/x-www-form-urlencoded" type="button">Form</button>
+        <button class="ct-chip" data-ct="text/plain" type="button">Text</button>
+        <button class="ct-chip" data-ct="application/xml" type="button">XML</button>
+      </div>
+      <textarea id="body" placeholder="请求体内容(GET/HEAD 不发送 body)"></textarea>
+    </div>
+  </div>
+
+  <div class="card" id="response">
+    <div class="empty-resp" id="empty-resp">点击「发送」执行请求,响应会显示在这里。</div>
+    <div id="resp-content" style="display:none">
+      <div class="resp-meta">
+        <span class="status-pill" id="resp-status">—</span>
+        <span><span class="meta-label">耗时</span> <span class="meta-val" id="resp-time">—</span></span>
+        <span><span class="meta-label">大小</span> <span class="meta-val" id="resp-size">—</span></span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-rtab="body" type="button">Body</button>
+        <button class="tab" data-rtab="headers" type="button">Headers <span id="cnt-rheaders"></span></button>
+      </div>
+      <div class="tab-pane active" id="rpane-body">
+        <pre id="resp-body"></pre>
+        <p class="truncate-warn" id="trunc-warn" style="display:none">⚠ 响应已超过 5 MiB,显示已截断</p>
+      </div>
+      <div class="tab-pane" id="rpane-headers">
+        <table class="kv"><tbody id="resp-headers"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="history">
+    <div class="section-title">
+      <span>历史记录(最近 20 条,本地存储)</span>
+      <button class="hist-clear" id="hist-clear" type="button">清空</button>
+    </div>
+    <div id="hist-list"></div>
+  </div>
+</main>
+<script>
+const HISTORY_KEY = 'webreturn:test-history';
+const state = {
+  method: 'GET',
+  url: '',
+  params: [{k:'',v:''}],
+  headers: [{k:'',v:''}],
+  body: '',
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function nonEmpty(rows){ return rows.filter(r => r.k.trim() !== ''); }
+function ensureTrailing(rows){
+  if (rows.length === 0 || rows[rows.length-1].k || rows[rows.length-1].v) {
+    rows.push({k:'',v:''});
+  }
+}
+function refreshCounts(){
+  $('cnt-params').textContent = nonEmpty(state.params).length ? `(${nonEmpty(state.params).length})` : '';
+  $('cnt-headers').textContent = nonEmpty(state.headers).length ? `(${nonEmpty(state.headers).length})` : '';
+}
+
+function renderRows(listId, rows){
+  const list = $(listId);
+  list.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const div = document.createElement('div');
+    div.className = 'kv-row';
+    const ki = document.createElement('input');
+    ki.type='text'; ki.placeholder='key'; ki.value=row.k; ki.spellcheck=false; ki.autocomplete='off';
+    const vi = document.createElement('input');
+    vi.type='text'; vi.placeholder='value'; vi.value=row.v; vi.spellcheck=false; vi.autocomplete='off';
+    const del = document.createElement('button');
+    del.type='button'; del.className='del'; del.textContent='×';
+    ki.addEventListener('input', () => { row.k = ki.value; refreshCounts(); ensureTail(listId, rows); });
+    vi.addEventListener('input', () => { row.v = vi.value; refreshCounts(); ensureTail(listId, rows); });
+    del.addEventListener('click', () => {
+      rows.splice(idx, 1);
+      if (rows.length === 0) rows.push({k:'',v:''});
+      renderRows(listId, rows);
+      refreshCounts();
+    });
+    div.append(ki, vi, del);
+    list.appendChild(div);
+  });
+}
+function ensureTail(listId, rows){
+  if (rows[rows.length-1].k || rows[rows.length-1].v) {
+    rows.push({k:'',v:''});
+    renderRows(listId, rows);
+  }
+}
+
+renderRows('params-list', state.params);
+renderRows('headers-list', state.headers);
+
+document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+  const which = b.dataset.add;
+  state[which].push({k:'',v:''});
+  renderRows(which + '-list', state[which]);
+}));
+
+// Tabs (request)
+document.querySelectorAll('.tabs .tab[data-tab]').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab[data-tab]').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('[id^="pane-"]').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('pane-' + t.dataset.tab).classList.add('active');
+}));
+// Tabs (response)
+document.querySelectorAll('.tab[data-rtab]').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab[data-rtab]').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('[id^="rpane-"]').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('rpane-' + t.dataset.rtab).classList.add('active');
+}));
+
+// Content-Type chips
+document.querySelectorAll('.ct-chip').forEach(c => c.addEventListener('click', () => {
+  const ct = c.dataset.ct;
+  const found = state.headers.find(h => h.k.toLowerCase() === 'content-type');
+  if (found) found.v = ct;
+  else state.headers.unshift({k:'Content-Type', v:ct});
+  ensureTrailing(state.headers);
+  renderRows('headers-list', state.headers);
+  refreshCounts();
+  document.querySelector('.tab[data-tab="headers"]').click();
+}));
+
+$('method').addEventListener('change', e => state.method = e.target.value);
+$('url').addEventListener('input', e => state.url = e.target.value);
+$('body').addEventListener('input', e => state.body = e.target.value);
+
+// 发送
+$('send').addEventListener('click', sendRequest);
+$('url').addEventListener('keydown', e => { if (e.key === 'Enter') sendRequest(); });
+
+async function sendRequest(){
+  if (!state.url.trim()) { $('url').focus(); return; }
+
+  // 把 query params 合到 URL
+  let target = state.url.trim();
+  const qp = nonEmpty(state.params);
+  if (qp.length) {
+    const qs = qp.map(p => `${encodeURIComponent(p.k)}=${encodeURIComponent(p.v)}`).join('&');
+    target += target.includes('?') ? '&' + qs : '?' + qs;
+  }
+  const headers = nonEmpty(state.headers).map(h => [h.k, h.v]);
+
+  const sendBtn = $('send');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '发送中...';
+  $('empty-resp').style.display = 'none';
+  $('resp-content').style.display = 'block';
+  $('resp-status').textContent = '...';
+  $('resp-status').className = 'status-pill';
+  $('resp-time').textContent = '—';
+  $('resp-size').textContent = '—';
+  $('resp-body').textContent = '';
+  $('resp-headers').innerHTML = '';
+
+  const t0 = performance.now();
+  let data;
+  try {
+    const r = await fetch('/api/proxy', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ method: state.method, url: target, headers, body: state.body }),
+    });
+    data = await r.json();
+  } catch (e) {
+    data = { error: e.message || '网络错误' };
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = '发送';
+  }
+  const t1 = performance.now();
+
+  renderResponse(data, Math.round(t1 - t0));
+  saveHistory({ method: state.method, url: target, headers, body: state.body }, data);
+}
+
+function renderResponse(data, fallbackElapsed){
+  if (data.error) {
+    $('resp-status').textContent = '错误';
+    $('resp-status').className = 'status-pill status-err';
+    $('resp-time').textContent = (data.elapsed_ms ?? fallbackElapsed) + ' ms';
+    $('resp-size').textContent = '—';
+    $('resp-body').textContent = data.error;
+    return;
+  }
+  const cls = data.status >= 200 && data.status < 300 ? 'status-2xx'
+            : data.status >= 300 && data.status < 400 ? 'status-3xx'
+            : data.status >= 400 && data.status < 500 ? 'status-4xx'
+            : 'status-5xx';
+  $('resp-status').textContent = data.status + ' ' + (data.status_text || '').replace(/^\d+\s*/, '') || data.status;
+  $('resp-status').className = 'status-pill ' + cls;
+  $('resp-time').textContent = data.elapsed_ms + ' ms';
+  $('resp-size').textContent = formatBytes(data.body_size);
+
+  let bodyText = data.body || '';
+  if (data.binary) {
+    bodyText = `(二进制响应,${data.body_size} 字节,Base64)\n\n` + bodyText;
+  } else {
+    const trim = bodyText.trim();
+    if ((trim.startsWith('{') && trim.endsWith('}')) || (trim.startsWith('[') && trim.endsWith(']'))) {
+      try { bodyText = JSON.stringify(JSON.parse(trim), null, 2); } catch {}
+    }
+  }
+  $('resp-body').textContent = bodyText;
+  $('trunc-warn').style.display = data.truncated ? 'block' : 'none';
+
+  const tbody = $('resp-headers');
+  tbody.innerHTML = '';
+  (data.headers || []).forEach(([k, v]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(k)}</td><td>${esc(v)}</td>`;
+    tbody.appendChild(tr);
+  });
+  $('cnt-rheaders').textContent = (data.headers || []).length ? `(${data.headers.length})` : '';
+}
+
+function formatBytes(n){
+  if (n == null) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+  return (n/(1024*1024)).toFixed(2) + ' MB';
+}
+
+// 历史记录
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function saveHistoryList(list){
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch {}
+}
+function saveHistory(req, resp){
+  const list = loadHistory();
+  list.unshift({
+    ts: Date.now(),
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body,
+    status: resp.status || null,
+    elapsed: resp.elapsed_ms || null,
+    error: resp.error || null,
+  });
+  saveHistoryList(list.slice(0, 20));
+  renderHistory();
+}
+function renderHistory(){
+  const list = loadHistory();
+  const wrap = $('history');
+  const ul = $('hist-list');
+  if (list.length === 0) { wrap.classList.remove('has-items'); ul.innerHTML = ''; return; }
+  wrap.classList.add('has-items');
+  ul.innerHTML = '';
+  list.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    const sCls = h.error ? 'status-err'
+               : !h.status ? 'status-err'
+               : h.status >= 200 && h.status < 300 ? 'status-2xx'
+               : h.status >= 300 && h.status < 400 ? 'status-3xx'
+               : 'status-4xx';
+    const sText = h.error ? 'ERR' : (h.status || '?');
+    div.innerHTML = `
+      <span class="hist-method ${esc(h.method)}">${esc(h.method)}</span>
+      <span class="hist-status ${sCls}">${sText}</span>
+      <span class="hist-url">${esc(h.url)}</span>
+      <span class="hist-time">${h.elapsed != null ? h.elapsed + 'ms' : ''}</span>
+    `;
+    div.addEventListener('click', () => loadFromHistory(h));
+    ul.appendChild(div);
+  });
+}
+function loadFromHistory(h){
+  state.method = h.method;
+  $('method').value = h.method;
+  try {
+    const u = new URL(h.url);
+    state.url = u.origin + u.pathname;
+    $('url').value = state.url;
+    state.params = [];
+    u.searchParams.forEach((v, k) => state.params.push({k, v}));
+    state.params.push({k:'',v:''});
+  } catch {
+    state.url = h.url;
+    $('url').value = h.url;
+    state.params = [{k:'',v:''}];
+  }
+  state.headers = (h.headers || []).map(([k, v]) => ({k, v}));
+  ensureTrailing(state.headers);
+  state.body = h.body || '';
+  $('body').value = state.body;
+  renderRows('params-list', state.params);
+  renderRows('headers-list', state.headers);
+  refreshCounts();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+$('hist-clear').addEventListener('click', () => {
+  if (confirm('清空所有历史记录?')) { saveHistoryList([]); renderHistory(); }
+});
+
+renderHistory();
+refreshCounts();
+</script>
+</body>
+</html>

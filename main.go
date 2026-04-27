@@ -25,6 +25,7 @@ var (
 var (
 	homeTmpl   *template.Template
 	viewerTmpl *template.Template
+	testTmpl   *template.Template
 	manager    *SessionManager
 )
 
@@ -40,12 +41,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("parse viewer template: %v", err)
 	}
+	testTmpl, err = template.ParseFS(templatesFS, "templates/test.html")
+	if err != nil {
+		log.Fatalf("parse test template: %v", err)
+	}
 
 	manager = NewSessionManager(*flagMaxBody)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("/test", testHandler)
 	mux.HandleFunc("/api/sessions", createSession)
+	mux.HandleFunc("/api/proxy", proxyHandler)
 	mux.HandleFunc("/v/", viewerPage)
 	mux.HandleFunc("/api/sessions/", apiSession)
 
