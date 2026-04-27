@@ -9,7 +9,8 @@
   body{
     margin:0;font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;
     background:#0d1117;color:#c9d1d9;min-height:100vh;
-    display:flex;align-items:center;justify-content:center;padding:24px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;gap:28px;
   }
   .card{
     max-width:520px;width:100%;background:#161b22;
@@ -21,7 +22,7 @@
   .ttl{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:#8b949e}
   input[type=text]{
     background:#0d1117;color:#c9d1d9;border:1px solid #30363d;
-    padding:7px 10px;border-radius:6px;width:120px;font:inherit;
+    padding:8px 10px;border-radius:6px;width:140px;font:inherit;
   }
   input[type=text]:focus{outline:none;border-color:#58a6ff}
   button{
@@ -32,13 +33,41 @@
   .hint{margin-top:20px;font-size:12px;color:#6e7681;line-height:1.6}
   code{background:#0d1117;padding:1px 6px;border-radius:3px;border:1px solid #21262d}
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#1f6feb33;color:#58a6ff;margin-bottom:14px}
+
+  footer{
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    color:#6e7681;font-size:12px;
+  }
+  .ghlink{
+    display:inline-flex;align-items:center;gap:8px;
+    color:#c9d1d9;text-decoration:none;
+    background:#161b22;border:1px solid #30363d;
+    padding:8px 16px;border-radius:999px;
+    font-size:13px;font-weight:500;
+    transition:border-color .15s ease,color .15s ease,transform .15s ease;
+  }
+  .ghlink:hover{border-color:#58a6ff;color:#58a6ff;transform:translateY(-1px)}
+  .ghlink svg{flex-shrink:0}
+  .ghhint a{color:#8b949e;text-decoration:none}
+  .ghhint a:hover{color:#58a6ff}
+
+  @media (max-width:480px){
+    body{padding:16px;gap:20px}
+    .card{padding:26px 20px}
+    h1{font-size:20px}
+    .desc{font-size:13px;margin-bottom:24px}
+    .desc br{display:none}
+    button{padding:12px 32px;font-size:14px}
+    input[type=text]{width:160px}
+    .ghlink{padding:7px 14px;font-size:12px}
+  }
 </style>
 </head>
 <body>
 <div class="card">
   <span class="badge">Cloudflare Workers</span>
   <h1>开发回调捕获</h1>
-  <p class="desc">点击下方按钮,服务端会随机分配一个短 token 并跳转到查看页。<br>所有打到 <code>/{token}</code> 的 HTTP 请求(任意路径、任意方法)都会被实时记录。</p>
+  <p class="desc">点击下方按钮,服务端会随机分配一个短 token 并跳转到查看页。所有打到 <code>/{token}</code> 的 HTTP 请求(任意路径、任意方法)都会被实时记录。</p>
   <form method="post" action="/api/sessions">
     <label class="ttl">有效期 <input type="text" name="ttl" value="1h" placeholder="如 1h, 30m, 2h"></label>
     <button type="submit">生成回调地址</button>
@@ -47,5 +76,14 @@
     支持的 TTL 格式: <code>30s</code> · <code>10m</code> · <code>1h</code> · <code>24h</code>
   </div>
 </div>
+<footer>
+  <a class="ghlink" href="https://github.com/csznet/webreturn" target="_blank" rel="noopener noreferrer">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    <span>csznet / webreturn</span>
+  </a>
+  <div class="ghhint">在 GitHub 查看源码 · <a href="https://github.com/csznet/webreturn/issues" target="_blank" rel="noopener noreferrer">提 Issue</a> · 欢迎 Star</div>
+</footer>
 </body>
 </html>
