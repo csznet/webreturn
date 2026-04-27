@@ -2,7 +2,10 @@
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/csznet/webreturn)
 
-开发用的 HTTP 回调捕获工具。点一下按钮拿到一个临时 URL,所有打到这个地址的请求都会实时滚动展示出来 — Method、URL、Query、Header、Body 一应俱全。适合调试 webhook、OAuth 回调、第三方推送、IoT 上报等需要"看一眼对方到底发了啥"的场景。
+开发用的两件套:
+
+1. **回调捕获** — 点一下按钮拿到临时 URL,所有打到这个地址的请求实时滚动显示(Method / URL / Query / Header / Body)。适合调试 webhook、OAuth 回调、IoT 上报。
+2. **在线请求测试** — 网页版 Postman:输入 URL、选 method、改请求头/Body,看响应。免装客户端,首页第二个卡片就是入口。
 
 支持两种部署方式,选一种即可:
 
@@ -92,14 +95,14 @@ npx wrangler deploy --var DEFAULT_TTL:30m
 
 | 路径 | 用途 |
 |---|---|
-| `/` | 首页(生成入口) |
-| `/{token}` | 浏览器 GET → 实时查看页;其它一律走 capture |
-| `/{token}/任意/路径` | **回调捕获入口**(任意 method) |
+| `/` | 首页(两个工具入口) |
+| `/v/{token}` | 实时查看页(浏览器打开) |
+| `/{token}` 或 `/{token}/任意/路径` | **回调捕获入口**(任意 method,任意 Accept) |
+| `/test` | 在线请求测试(Postman 风格 UI) |
 | `/api/sessions` | `POST` 创建会话 |
 | `/api/sessions/{token}/events` | SSE 实时流 |
 | `/api/sessions/{token}/requests` | 历史快照 JSON |
-
-判定逻辑:`GET /{token}` 且 `Accept` 头含 `text/html` → 渲染查看页;其它(POST/PUT、curl、webhook 等)→ 进 capture。带子路径 `/{token}/...` 永远是 capture。这也是 webhook.site 同款的二合一玩法。
+| `/api/proxy` | `POST` JSON,代理转发请求(供 `/test` 页面调用) |
 
 ### 怎么工作的
 
@@ -115,6 +118,35 @@ npx wrangler deploy --var DEFAULT_TTL:30m
 - 单条 body 超过 1 MiB 会被截断(可在 `src/session.ts` 改 `MAX_BODY`)
 - Workers 的请求最多持续 ~15 min,SSE 会定时断开;前端会自动指数退避重连,不影响使用
 - 客户端 IP 用 `CF-Connecting-IP` 头取(Cloudflare 自动注入)
+
+---
+
+## 在线请求测试 (`/test`)
+
+首页第二个卡片进入,UI 类似 Postman / Hoppscotch:
+
+- 顶部 method 下拉(GET/POST/PUT/DELETE/PATCH/HEAD/OPTIONS)+ URL 输入框 + 「发送」
+- Tab:`Params`(自动拼到 URL)/ `Headers`(键值对)/ `Body`(文本 + Content-Type 快捷选择 JSON / Form / Text / XML)
+- 响应面板显示 状态码 + 耗时 + 大小 + Body(JSON 自动 pretty-print)+ Headers
+- 历史记录最近 20 条放在 `localStorage`,点一下复用
+
+### 工作原理
+
+浏览器把请求参数 POST 给 `/api/proxy`,Worker / Go 服务端用 `fetch()` / `http.Client` 转发到目标 URL,把响应包成 JSON 返回。这样绕过浏览器的 CORS 限制,任何 URL 都能测。
+
+### 安全(SSRF 防护)
+
+- 仅允许 `http` / `https` scheme
+- 拒绝主机名:`localhost`、`metadata.*`、`*.localhost` / `*.internal` / `*.local`
+- 拒绝 IP 段:`127.x` / `10.x` / `172.16-31.x` / `192.168.x` / `169.254.x`(链路本地 + AWS metadata)/ `0.0.0.0` / 多播 / IPv6 ULA / IPv6 link-local
+- Go 端额外用自定义 `DialContext` 在解析后再校验一次 IP,防 DNS rebinding
+- 单次请求 / 响应 body 上限 5 MiB,30 秒超时,最多跟 5 次重定向
+
+### 局限
+
+- Worker 版每次代理都会消耗一个请求(免费版 10 万/天),滥用风险存在但量级有限
+- 二进制响应会以 base64 形式返回(前端会标注)
+- 不做服务端频控(可自行加 `RateLimitDO` 或反向代理层处理)
 
 ---
 
@@ -161,17 +193,20 @@ webreturn/
 ├── main.go               # Go 版入口、flag、路由
 ├── session.go            # 会话管理、随机端口分配、capture 处理
 ├── handlers.go           # UI / API HTTP handler、SSE
+├── proxy.go              # /api/proxy 代理实现 + SSRF 防护
 ├── templates/            # Go 版前端模板(embed 进二进制)
 │   ├── home.html
-│   └── viewer.html
+│   ├── viewer.html
+│   └── test.html
 ├── wrangler.toml         # Cloudflare Workers 配置
 ├── package.json
 ├── tsconfig.json
 └── src/                  # Workers 版源码
-    ├── worker.ts         # Worker 入口、路由、token 分配
+    ├── worker.ts         # Worker 入口、路由、token 分配、proxy
     ├── session.ts        # CallbackSession Durable Object
     ├── home.html
-    └── viewer.html
+    ├── viewer.html
+    └── test.html
 ```
 
 两套实现完全独立 — Go 端只看 `*.go` + `templates/`,Worker 端只看 `src/` + 三个根配置。两边都放在仓库根方便 Cloudflare deploy 按钮直接识别。

@@ -10,7 +10,8 @@
       "Bash(taskkill //F //IM webreturn.exe)",
       "Bash(npx wrangler *)",
       "Bash(/e/io/webreturn/webreturn.exe -listen :18081 -ttl 2m)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(/e/io/webreturn/webreturn.exe -listen :18082 -ttl 5m)"
     ]
   }
 }

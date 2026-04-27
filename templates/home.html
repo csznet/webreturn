@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Webreturn · 开发回调捕获</title>
+<title>Webreturn · 开发回调与请求工具</title>
 <style>
   *{box-sizing:border-box}
   body{
@@ -12,70 +12,110 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding:24px;gap:28px;
   }
-  .card{
-    max-width:520px;width:100%;background:#161b22;
-    border:1px solid #30363d;border-radius:10px;padding:36px;text-align:center;
+  .hero{text-align:center;max-width:880px;width:100%}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;background:#2ea04340;color:#3fb950;margin-bottom:12px;letter-spacing:.3px}
+  h1{margin:0 0 6px;font-size:24px;font-weight:600}
+  .tagline{color:#8b949e;margin:0;font-size:14px}
+
+  .cards{
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+    max-width:880px;width:100%;
   }
-  h1{margin:0 0 8px;font-size:22px;font-weight:600}
-  .desc{color:#8b949e;margin:8px 0 28px;line-height:1.6}
-  form{display:flex;flex-direction:column;gap:18px;align-items:center}
-  .ttl{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:#8b949e}
+  .card{
+    background:#161b22;border:1px solid #30363d;border-radius:10px;padding:28px;
+    display:flex;flex-direction:column;gap:14px;text-decoration:none;color:inherit;
+    transition:border-color .15s ease,transform .15s ease;
+  }
+  .link-card:hover{border-color:#58a6ff;transform:translateY(-2px)}
+  .card h2{margin:0;font-size:17px;font-weight:600}
+  .card .desc{margin:0;color:#8b949e;font-size:13px;line-height:1.6;flex:1}
+  .icon{
+    width:42px;height:42px;border-radius:10px;background:#0d1117;border:1px solid #30363d;
+    display:flex;align-items:center;justify-content:center;color:#58a6ff;
+  }
+  .icon.green{color:#3fb950}
+  form{display:flex;flex-direction:column;gap:12px}
+  .ttl{display:inline-flex;align-items:center;gap:10px;font-size:12px;color:#8b949e}
   input[type=text]{
     background:#0d1117;color:#c9d1d9;border:1px solid #30363d;
-    padding:8px 10px;border-radius:6px;width:140px;font:inherit;
+    padding:7px 10px;border-radius:6px;width:100%;font:inherit;
   }
   input[type=text]:focus{outline:none;border-color:#58a6ff}
-  button{
-    background:#238636;color:white;border:0;padding:11px 32px;
-    font:600 15px inherit;border-radius:6px;cursor:pointer;
+  .ttl input{width:120px;flex:0 0 auto}
+  button[type=submit]{
+    background:#238636;color:white;border:0;padding:10px 22px;
+    font:600 14px inherit;border-radius:6px;cursor:pointer;
   }
-  button:hover{background:#2ea043}
-  .hint{margin-top:20px;font-size:12px;color:#6e7681;line-height:1.6}
-  code{background:#0d1117;padding:1px 6px;border-radius:3px;border:1px solid #21262d}
-  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#2ea04340;color:#3fb950;margin-bottom:14px}
+  button[type=submit]:hover{background:#2ea043}
+  .cta{
+    display:inline-flex;align-items:center;gap:6px;color:#58a6ff;font-weight:500;font-size:14px;
+    margin-top:auto;
+  }
+  .hint{font-size:11px;color:#6e7681}
+  code{background:#0d1117;padding:1px 6px;border-radius:3px;border:1px solid #21262d;font-size:12px}
 
   footer{
     display:flex;flex-direction:column;align-items:center;gap:10px;
     color:#6e7681;font-size:12px;
   }
   .ghlink{
-    display:inline-flex;align-items:center;gap:8px;
-    color:#c9d1d9;text-decoration:none;
-    background:#161b22;border:1px solid #30363d;
-    padding:8px 16px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:8px;color:#c9d1d9;text-decoration:none;
+    background:#161b22;border:1px solid #30363d;padding:8px 16px;border-radius:999px;
     font-size:13px;font-weight:500;
     transition:border-color .15s ease,color .15s ease,transform .15s ease;
   }
   .ghlink:hover{border-color:#58a6ff;color:#58a6ff;transform:translateY(-1px)}
-  .ghlink svg{flex-shrink:0}
   .ghhint a{color:#8b949e;text-decoration:none}
   .ghhint a:hover{color:#58a6ff}
 
+  @media (max-width:700px){
+    .cards{grid-template-columns:1fr}
+  }
   @media (max-width:480px){
     body{padding:16px;gap:20px}
-    .card{padding:26px 20px}
     h1{font-size:20px}
-    .desc{font-size:13px;margin-bottom:24px}
-    .desc br{display:none}
-    button{padding:12px 32px;font-size:14px}
-    input[type=text]{width:160px}
+    .card{padding:22px 18px}
     .ghlink{padding:7px 14px;font-size:12px}
   }
 </style>
 </head>
 <body>
-<div class="card">
+<div class="hero">
   <span class="badge">Self-hosted</span>
-  <h1>开发回调捕获</h1>
-  <p class="desc">点击下方按钮,服务端会随机选一个空闲端口,启动专属监听器,并跳转到查看页。所有打到该端口的 HTTP 请求(任意路径、任意方法)都会被实时记录。</p>
-  <form method="post" action="/api/sessions">
-    <label class="ttl">有效期 <input type="text" name="ttl" value="{{.DefaultTTL}}" placeholder="如 1h, 30m, 2h"></label>
-    <button type="submit">生成回调地址</button>
-  </form>
-  <div class="hint">
-    支持的 TTL 格式: <code>30s</code> · <code>10m</code> · <code>1h</code> · <code>24h</code>
-  </div>
+  <h1>Webreturn</h1>
+  <p class="tagline">开发回调捕获 + 在线请求测试</p>
 </div>
+
+<div class="cards">
+  <div class="card">
+    <div class="icon green" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+      </svg>
+    </div>
+    <h2>接收回调</h2>
+    <p class="desc">服务端为你随机分配空闲端口启动监听器,实时显示所有打过来的请求 — Method、URL、Query、Headers、Body 一览无余。</p>
+    <form method="post" action="/api/sessions">
+      <label class="ttl">有效期 <input type="text" name="ttl" value="{{.DefaultTTL}}" placeholder="1h, 30m, 24h"></label>
+      <button type="submit">生成回调地址</button>
+      <span class="hint">TTL 格式: <code>30s</code> · <code>10m</code> · <code>1h</code> · <code>24h</code></span>
+    </form>
+  </div>
+
+  <a class="card link-card" href="/test">
+    <div class="icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m22 2-7 20-4-9-9-4Z"/>
+        <path d="M22 2 11 13"/>
+      </svg>
+    </div>
+    <h2>在线请求测试</h2>
+    <p class="desc">网页版 Postman:输入 URL、选择 method、调参数与请求头、查看响应,免装客户端。</p>
+    <span class="cta">打开 →</span>
+  </a>
+</div>
+
 <footer>
   <a class="ghlink" href="https://github.com/csznet/webreturn" target="_blank" rel="noopener noreferrer">
     <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

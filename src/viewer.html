@@ -59,6 +59,14 @@
   .clear{font-size:12px;color:#8b949e;cursor:pointer;background:transparent;border:0;padding:4px 8px}
   .clear:hover{color:#c9d1d9}
   .copied{color:#3fb950 !important}
+  .action-bar{display:flex;justify-content:flex-end;margin-bottom:6px}
+  .replay-btn{
+    background:#1f6feb33;color:#58a6ff;border:1px solid #1f6feb55;
+    padding:5px 12px;border-radius:6px;cursor:pointer;
+    font:600 12px inherit;display:inline-flex;align-items:center;gap:5px;
+    transition:background .12s,border-color .12s;
+  }
+  .replay-btn:hover{background:#1f6feb55;border-color:#58a6ff}
 
   /* 移动端 */
   @media (max-width:640px){
@@ -185,6 +193,9 @@
         <span class="ts">${fmtTime(req.timestamp)}</span>
       </div>
       <div class="body-section">
+        <div class="action-bar">
+          <button class="replay-btn" type="button" title="把这次请求填进 /test,只需补一个目标 URL">重放 →</button>
+        </div>
         <div class="section-title">请求行</div>
         <pre>${requestLine}</pre>
         <div class="section-title">Query 参数</div>
@@ -196,7 +207,30 @@
       </div>
     `;
     div.querySelector('.req-head').addEventListener('click', () => div.classList.toggle('open'));
+    div.querySelector('.replay-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      replayRequest(req);
+    });
     $list.insertBefore(div, $list.firstChild);
+  }
+
+  function replayRequest(req){
+    const skipH = new Set(['host', 'content-length']);
+    const headers = [];
+    for (const [k, vs] of Object.entries(req.headers || {})) {
+      if (skipH.has(k.toLowerCase())) continue;
+      const arr = Array.isArray(vs) ? vs : [vs];
+      for (const v of arr) headers.push([k, v]);
+    }
+    const params = [];
+    for (const [k, vs] of Object.entries(req.query || {})) {
+      const arr = Array.isArray(vs) ? vs : [vs];
+      for (const v of arr) params.push([k, v]);
+    }
+    const payload = { method: req.method, headers, params, body: req.body || '' };
+    try { localStorage.setItem('webreturn:replay', JSON.stringify(payload)); }
+    catch (e) { alert('保存重放数据失败: ' + e.message); return; }
+    window.open('/test#replay', '_blank', 'noopener');
   }
 
   function setStatus(state, text){

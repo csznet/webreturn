@@ -478,6 +478,33 @@ $('hist-clear').addEventListener('click', () => {
   if (confirm('清空所有历史记录?')) { saveHistoryList([]); renderHistory(); }
 });
 
+// 从回调查看页跳转过来时,自动把请求填入(目标 URL 留空)
+(function tryApplyReplay(){
+  if (location.hash !== '#replay') return;
+  history.replaceState({}, '', location.pathname);
+  let data;
+  try {
+    const raw = localStorage.getItem('webreturn:replay');
+    if (!raw) return;
+    data = JSON.parse(raw);
+    localStorage.removeItem('webreturn:replay');
+  } catch { return; }
+  if (!data) return;
+  state.method = data.method || 'GET';
+  $('method').value = state.method;
+  state.url = '';
+  $('url').value = '';
+  state.headers = (data.headers || []).map(([k, v]) => ({k, v}));
+  ensureTrailing(state.headers);
+  state.params = (data.params || []).map(([k, v]) => ({k, v}));
+  ensureTrailing(state.params);
+  state.body = data.body || '';
+  $('body').value = state.body;
+  renderRows('params-list', state.params);
+  renderRows('headers-list', state.headers);
+  setTimeout(() => $('url').focus(), 80);
+})();
+
 renderHistory();
 refreshCounts();
 </script>
