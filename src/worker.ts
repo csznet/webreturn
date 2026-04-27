@@ -19,7 +19,7 @@ const TOKEN_ATTEMPTS: Array<[string, number, number]> = [
 ];
 
 // 保留路径 — 不能被当作 token
-const RESERVED_FIRST_SEGMENT = new Set(['', 'v', 'api', 'favicon.ico', 'robots.txt']);
+const RESERVED_FIRST_SEGMENT = new Set(['', 'api', 'favicon.ico', 'robots.txt']);
 
 function parseTTL(s: string | undefined | null, fallback: number): number {
   if (!s) return fallback;
@@ -115,22 +115,10 @@ export default {
       const ttlMs = parseTTL(ttlRaw, parseTTL(env.DEFAULT_TTL, DEFAULT_TTL_MS));
       try {
         const token = await allocateToken(env, ttlMs, url.host);
-        return new Response(null, { status: 303, headers: { Location: `/v/${token}` } });
+        return new Response(null, { status: 303, headers: { Location: `/${token}` } });
       } catch (e) {
         return plain(String((e as Error).message), 503);
       }
-    }
-
-    // 查看页
-    if (path.startsWith('/v/') && method === 'GET') {
-      const token = path.slice(3);
-      if (!isValidToken(token)) return plain('not found', 404);
-      const stub = env.SESSION.get(env.SESSION.idFromName(token));
-      const meta = await stub.fetch('https://do/meta');
-      if (meta.status !== 200) return plain('会话不存在或已过期', 404);
-      const m = await meta.json<{ expiresAt: number; host: string }>();
-      const captureURL = `${url.protocol}//${m.host}/${token}`;
-      return htmlResponse(renderViewer(token, captureURL, m.expiresAt, `${m.host}/${token}`));
     }
 
     // SSE / 快照
@@ -147,17 +135,31 @@ export default {
       return plain('not found', 404);
     }
 
-    // 捕获 — /{token} 或 /{token}/任意路径
+    // /{token} — 浏览器 GET → 查看页;其它一律 capture
+    // /{token}/任意路径 — 一律 capture
     const seg1End = path.indexOf('/', 1);
     const firstSeg = seg1End === -1 ? path.slice(1) : path.slice(1, seg1End);
     if (RESERVED_FIRST_SEGMENT.has(firstSeg)) return plain('not found', 404);
     if (!isValidToken(firstSeg)) return plain('not found', 404);
 
-    const remainder = seg1End === -1 ? '/' : path.slice(seg1End);
     const stub = env.SESSION.get(env.SESSION.idFromName(firstSeg));
-    const captureURL = new URL(req.url);
-    captureURL.pathname = `/capture${remainder}`;
-    const fwd = new Request(captureURL.toString(), req);
+
+    const isExactToken = path === '/' + firstSeg || path === '/' + firstSeg + '/';
+    const accept = req.headers.get('accept') || '';
+    const wantsViewer = method === 'GET' && isExactToken && accept.includes('text/html');
+
+    if (wantsViewer) {
+      const meta = await stub.fetch('https://do/meta');
+      if (meta.status !== 200) return plain('会话不存在或已过期', 404);
+      const m = await meta.json<{ expiresAt: number; host: string }>();
+      const viewURL = `${url.protocol}//${m.host}/${firstSeg}`;
+      return htmlResponse(renderViewer(firstSeg, viewURL, m.expiresAt, `${m.host}/${firstSeg}`));
+    }
+
+    const remainder = seg1End === -1 ? '/' : path.slice(seg1End);
+    const fwdURL = new URL(req.url);
+    fwdURL.pathname = `/capture${remainder}`;
+    const fwd = new Request(fwdURL.toString(), req);
     fwd.headers.set('x-webreturn-client-ip', req.headers.get('cf-connecting-ip') || '');
     fwd.headers.set('x-webreturn-host', url.host);
     return stub.fetch(fwd);

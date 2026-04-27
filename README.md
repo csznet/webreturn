@@ -93,11 +93,13 @@ npx wrangler deploy --var DEFAULT_TTL:30m
 | 路径 | 用途 |
 |---|---|
 | `/` | 首页(生成入口) |
-| `/v/{token}` | 实时查看页 |
-| `/{token}` 或 `/{token}/任意/路径` | **回调捕获入口**(任意 method) |
+| `/{token}` | 浏览器 GET → 实时查看页;其它一律走 capture |
+| `/{token}/任意/路径` | **回调捕获入口**(任意 method) |
 | `/api/sessions` | `POST` 创建会话 |
 | `/api/sessions/{token}/events` | SSE 实时流 |
 | `/api/sessions/{token}/requests` | 历史快照 JSON |
+
+判定逻辑:`GET /{token}` 且 `Accept` 头含 `text/html` → 渲染查看页;其它(POST/PUT、curl、webhook 等)→ 进 capture。带子路径 `/{token}/...` 永远是 capture。这也是 webhook.site 同款的二合一玩法。
 
 ### 怎么工作的
 
