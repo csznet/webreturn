@@ -27,6 +27,12 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	_ = testTmpl.Execute(w, nil)
 }
 
+func writeNotFound(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	_ = notfoundTmpl.Execute(w, nil)
+}
+
 func createSession(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -52,12 +58,12 @@ func createSession(w http.ResponseWriter, r *http.Request) {
 func viewerPage(w http.ResponseWriter, r *http.Request) {
 	token := strings.TrimPrefix(r.URL.Path, "/v/")
 	if token == "" || strings.Contains(token, "/") {
-		http.NotFound(w, r)
+		writeNotFound(w)
 		return
 	}
 	sess := manager.Get(token)
 	if sess == nil {
-		http.Error(w, "会话不存在或已过期", http.StatusNotFound)
+		writeNotFound(w)
 		return
 	}
 

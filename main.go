@@ -23,10 +23,11 @@ var (
 )
 
 var (
-	homeTmpl   *template.Template
-	viewerTmpl *template.Template
-	testTmpl   *template.Template
-	manager    *SessionManager
+	homeTmpl     *template.Template
+	viewerTmpl   *template.Template
+	testTmpl     *template.Template
+	notfoundTmpl *template.Template
+	manager      *SessionManager
 )
 
 func main() {
@@ -44,6 +45,10 @@ func main() {
 	testTmpl, err = template.ParseFS(templatesFS, "templates/test.html")
 	if err != nil {
 		log.Fatalf("parse test template: %v", err)
+	}
+	notfoundTmpl, err = template.ParseFS(templatesFS, "templates/notfound.html")
+	if err != nil {
+		log.Fatalf("parse notfound template: %v", err)
 	}
 
 	manager = NewSessionManager(*flagMaxBody)

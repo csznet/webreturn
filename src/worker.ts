@@ -1,6 +1,7 @@
 import HOME_HTML from './home.html';
 import VIEWER_HTML from './viewer.html';
 import TEST_HTML from './test.html';
+import NOTFOUND_HTML from './notfound.html';
 
 export interface Env {
   SESSION: DurableObjectNamespace;
@@ -81,6 +82,13 @@ function plain(body: string, status = 200): Response {
   return new Response(body, {
     status,
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
+function notFoundPage(): Response {
+  return new Response(NOTFOUND_HTML, {
+    status: 404,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
 }
 
@@ -259,10 +267,10 @@ export default {
     // 查看页 — /v/{token},仅 GET
     if (path.startsWith('/v/') && method === 'GET') {
       const token = path.slice(3).replace(/\/$/, '');
-      if (!isValidToken(token)) return plain('not found', 404);
+      if (!isValidToken(token)) return notFoundPage();
       const stub = env.SESSION.get(env.SESSION.idFromName(token));
       const meta = await stub.fetch('https://do/meta');
-      if (meta.status !== 200) return plain('会话不存在或已过期', 404);
+      if (meta.status !== 200) return notFoundPage();
       const m = await meta.json<{ expiresAt: number; host: string }>();
       const captureURL = `${url.protocol}//${m.host}/${token}`;
       return htmlResponse(renderViewer(token, captureURL, m.expiresAt, `${m.host}/${token}`));
